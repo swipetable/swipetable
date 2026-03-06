@@ -1,1 +1,1581 @@
-swipetable.pages.dev/embed.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classwork Studio Pro</title>
+    <style>
+        :root {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e4e6e9;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5f6368;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border: #d1d5db;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --danger: #dc2626;
+            --success: #16a34a;
+            --editor-bg: #ffffff;
+            --tool-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --border: #4b5563;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --danger: #ef4444;
+            --success: #22c55e;
+            --editor-bg: #111827;
+            --tool-bg: rgba(17, 24, 39, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        .app-header {
+            height: 56px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .app-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            background-color: var(--bg-tertiary);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .user-chip:hover {
+            background-color: var(--border);
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* --- Main Layout --- */
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Views --- */
+        #view-dashboard {
+            width: 100%;
+            padding: 40px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+            content-visibility: auto;
+        }
+
+        #view-pages {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* --- FULLSCREEN EDITOR - TRUE FULLSCREEN --- */
+        #view-editor {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--editor-bg);
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        /* Minimal Floating Toolbar */
+        .editor-toolbar {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tool-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            box-shadow: 0 4px 20px -5px var(--shadow);
+            z-index: 1002;
+            backdrop-filter: blur(10px);
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 2px;
+            padding-right: 8px;
+            margin-right: 8px;
+            border-right: 1px solid var(--border);
+        }
+
+        .tool-group:last-child { border-right: none; }
+
+        .tool-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+
+        .tool-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tool-btn.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .color-picker-wrapper {
+            position: relative;
+            width: 28px;
+            height: 28px;
+            overflow: hidden;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+        
+        .color-picker-wrapper input {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Back Button - Minimal */
+        .editor-back-btn {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            background-color: var(--tool-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px -2px var(--shadow);
+            z-index: 1002;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s;
+        }
+
+        .editor-back-btn:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        /* Title Input - Minimal */
+        .editor-title-bar {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            background-color: var(--tool-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px -2px var(--shadow);
+            z-index: 1002;
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+
+        .editor-title-input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            flex: 1;
+            outline: none;
+            width: 150px;
+        }
+
+        .editor-title-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .save-indicator {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        /* FULLSCREEN TEXTAREA - NO MARGINS, NO BORDERS */
+        .editor-workspace {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: var(--editor-bg);
+        }
+
+        .editor-sheet {
+            background-color: var(--editor-bg);
+            width: 100%;
+            min-height: 100vh;
+            padding: 80px 40px 40px 40px;
+            outline: none;
+            line-height: 1.6;
+            font-size: 16px;
+            color: var(--text-primary);
+            border: none;
+        }
+
+        .editor-sheet:focus {
+            outline: none;
+        }
+
+        /* --- Subject Cards --- */
+        .subject-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 12px;
+        }
+
+        .subject-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px var(--shadow);
+            border-color: var(--accent);
+        }
+
+        .subject-icon {
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        .subject-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .subject-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-delete-sub {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            opacity: 0;
+            color: var(--danger);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .subject-card:hover .btn-delete-sub { opacity: 0.6; }
+        .btn-delete-sub:hover { opacity: 1 !important; background-color: rgba(220, 38, 38, 0.1); }
+
+        .add-card {
+            border-style: dashed;
+            justify-content: center;
+            color: var(--text-secondary);
+            background-color: transparent;
+            min-height: 180px;
+        }
+
+        .add-card:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* --- Pages View --- */
+        .pages-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .back-btn:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .page-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .page-item {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .page-item:hover {
+            border-color: var(--accent);
+            background-color: var(--bg-tertiary);
+            transform: translateX(4px);
+        }
+
+        .page-info h3 { margin-bottom: 6px; font-weight: 600; font-size: 1.1rem; }
+        .page-info span { font-size: 0.85rem; color: var(--text-secondary); }
+
+        .btn-new-page {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-new-page:hover { background-color: var(--accent-hover); }
+
+        /* --- Context Menu --- */
+        #context-menu {
+            position: absolute;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 15px -3px var(--shadow);
+            border-radius: 8px;
+            padding: 6px 0;
+            display: none;
+            z-index: 1003;
+            min-width: 180px;
+        }
+
+        .ctx-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background-color 0.1s;
+        }
+
+        .ctx-item:hover { background-color: var(--bg-tertiary); }
+        .ctx-divider { height: 1px; background-color: var(--border); margin: 6px 0; }
+
+        /* --- Modal System --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            transform: scale(0.95);
+            transition: transform 0.3s;
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title { font-size: 1.25rem; font-weight: 700; }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover { color: var(--text-primary); background-color: var(--bg-tertiary); }
+
+        .modal-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input, .form-textarea {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 200px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .btn:hover { background-color: var(--border); }
+        
+        .btn.primary { 
+            background-color: var(--accent); 
+            color: white; 
+            border-color: var(--accent); 
+        }
+        
+        .btn.primary:hover { background-color: var(--accent-hover); }
+
+        .btn.danger {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .btn.danger:hover { filter: brightness(1.1); }
+
+        /* Emoji Picker Grid */
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .emoji-btn {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .emoji-btn:hover {
+            background-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .selected-emoji-display {
+            font-size: 3rem;
+            text-align: center;
+            padding: 16px;
+            background-color: var(--bg-tertiary);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        /* Profile Picture Upload */
+        .avatar-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--border);
+            background-color: var(--bg-tertiary);
+        }
+
+        .avatar-input {
+            display: none;
+        }
+
+        .avatar-label {
+            padding: 8px 16px;
+            background-color: var(--bg-tertiary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .avatar-label:hover { background-color: var(--border); }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px var(--shadow);
+            border-left: 4px solid var(--success);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(150%);
+            transition: transform 0.3s ease-out;
+            z-index: 4000;
+            font-weight: 500;
+        }
+
+        .toast.show { transform: translateX(0); }
+        .toast.error { border-left-color: var(--danger); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: var(--text-secondary); }
+
+    </style>
+</head>
+<body>
+
+    <header class="app-header" id="main-header">
+        <div class="header-left">
+            <div class="app-title" onclick="app.goHome()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                Classwork Studio
+            </div>
+        </div>
+        
+        <div class="header-controls">
+            <div class="user-chip" onclick="app.openAccountModal()">
+                <img id="header-avatar" src="" class="user-avatar" alt="Profile" style="display: none;">
+                <div id="header-initials" class="user-avatar" style="display: flex; align-items: center; justify-content: center; background-color: var(--accent); color: white; font-weight: 600; font-size: 0.9rem;"></div>
+                <span id="header-name">Guest</span>
+            </div>
+            
+            <button class="btn-icon" onclick="app.toggleTheme()" title="Toggle Theme">
+                <svg id="theme-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
+            
+            <button class="btn-icon" onclick="app.openDataModal()" title="Import/Export Data">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- DASHBOARD -->
+        <div id="view-dashboard">
+            <div class="subject-card add-card" onclick="app.openSubjectModal()">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span style="font-weight: 600;">New Subject</span>
+            </div>
+        </div>
+
+        <!-- PAGES -->
+        <div id="view-pages">
+            <div class="pages-header">
+                <button class="back-btn" onclick="app.goHome()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Back
+                </button>
+                <h2 id="pages-subject-title" style="font-size: 1.5rem; font-weight: 700;">Subject</h2>
+                <button class="btn-new-page" onclick="app.createNewPage()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Page
+                </button>
+            </div>
+            <div class="page-list" id="page-list-container"></div>
+        </div>
+
+        <!-- FULLSCREEN EDITOR -->
+        <div id="view-editor">
+            <!-- Floating Back Button -->
+            <button class="editor-back-btn" onclick="app.closeEditor()" title="Back to Pages">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back
+            </button>
+
+            <!-- Floating Title Bar -->
+            <div class="editor-title-bar">
+                <input type="text" class="editor-title-input" id="editor-title" placeholder="Untitled">
+                <span class="save-indicator" id="save-indicator">Unsaved</span>
+            </div>
+
+            <!-- Floating Toolbar -->
+            <div class="editor-toolbar">
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="app.format('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+                    <button class="tool-btn" onclick="app.format('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+                    <button class="tool-btn" onclick="app.format('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+                </div>
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="app.format('justifyLeft')" title="Align Left">L</button>
+                    <button class="tool-btn" onclick="app.format('justifyCenter')" title="Align Center">C</button>
+                    <button class="tool-btn" onclick="app.format('justifyRight')" title="Align Right">R</button>
+                </div>
+                <div class="tool-group">
+                    <div class="color-picker-wrapper" title="Text Color">
+                        <input type="color" id="color-text" onchange="app.format('foreColor', this.value)">
+                    </div>
+                    <div class="color-picker-wrapper" title="Highlight Color">
+                        <input type="color" id="color-bg" onchange="app.format('hiliteColor', this.value)" value="#ffff00">
+                    </div>
+                </div>
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="app.saveCurrentPage()" title="Save (Ctrl+S)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fullscreen Editor Workspace -->
+            <div class="editor-workspace" id="editor-workspace">
+                <div class="editor-sheet" id="editor-canvas" contenteditable="true" spellcheck="false">
+                    <p>Start typing your notes here...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Context Menu -->
+    <div id="context-menu">
+        <div class="ctx-item" onclick="app.format('bold'); app.hideContextMenu()"><b>Bold</b> <span style="margin-left:auto; color:var(--text-secondary); font-size:0.8em">Ctrl+B</span></div>
+        <div class="ctx-item" onclick="app.format('italic'); app.hideContextMenu()"><i>Italic</i> <span style="margin-left:auto; color:var(--text-secondary); font-size:0.8em">Ctrl+I</span></div>
+        <div class="ctx-item" onclick="app.format('underline'); app.hideContextMenu()"><u>Underline</u> <span style="margin-left:auto; color:var(--text-secondary); font-size:0.8em">Ctrl+U</span></div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" onclick="app.format('cut'); app.hideContextMenu()">Cut</div>
+        <div class="ctx-item" onclick="app.format('copy'); app.hideContextMenu()">Copy</div>
+        <div class="ctx-item" onclick="app.format('paste'); app.hideContextMenu()">Paste</div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span id="toast-message">Operation successful</span>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Account Modal -->
+    <div id="modal-account" class="modal-overlay" onclick="if(event.target === this) app.closeModal('account')">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Account Settings</div>
+                <button class="modal-close" onclick="app.closeModal('account')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="avatar-upload">
+                    <img id="modal-avatar-preview" src="" class="avatar-preview" style="display: none;">
+                    <div id="modal-avatar-placeholder" class="avatar-preview" style="display: flex; align-items: center; justify-content: center; background-color: var(--accent); color: white; font-size: 2rem; font-weight: 700;">?</div>
+                    <label class="avatar-label">
+                        <input type="file" class="avatar-input" id="avatar-input" accept="image/*" onchange="app.handleAvatarUpload(this)">
+                        Choose Photo
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Display Name</label>
+                    <input type="text" class="form-input" id="account-name" placeholder="Your Name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="account-username" placeholder="@username">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="app.closeModal('account')">Cancel</button>
+                <button class="btn primary" onclick="app.saveAccount()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Modal -->
+    <div id="modal-subject" class="modal-overlay" onclick="if(event.target === this) app.closeModal('subject')">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="subject-modal-title">New Subject</div>
+                <button class="modal-close" onclick="app.closeModal('subject')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="selected-emoji-display" id="selected-emoji">📚</div>
+                <div class="emoji-grid" id="emoji-grid"></div>
+                <div class="form-group" style="margin-top: 12px;">
+                    <label class="form-label">Subject Name</label>
+                    <input type="text" class="form-input" id="subject-name" placeholder="e.g. Mathematics">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="app.closeModal('subject')">Cancel</button>
+                <button class="btn primary" onclick="app.saveSubject()">Create Subject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Transfer Modal -->
+    <div id="modal-data" class="modal-overlay" onclick="if(event.target === this) app.closeModal('data')">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">Data Transfer</div>
+                <button class="modal-close" onclick="app.closeModal('data')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 12px;">
+                    Copy this JSON to backup your data (including your profile and all subjects), or paste JSON to restore.
+                </p>
+                <textarea class="form-textarea" id="json-field" placeholder="{ ... }"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="app.copyJson()">Copy to Clipboard</button>
+                <button class="btn primary" onclick="app.importJson()">Import Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="modal-confirm" class="modal-overlay" onclick="if(event.target === this) app.closeModal('confirm')">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <div class="modal-title" id="confirm-title">Confirm Action</div>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message" style="color: var(--text-secondary); line-height: 1.5;">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="app.closeModal('confirm')">Cancel</button>
+                <button class="btn danger" id="confirm-btn" onclick="app.executeConfirm()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = (() => {
+            let state = {
+                user: { name: '', username: '', avatar: '' },
+                subjects: [],
+                currentSubjectId: null,
+                currentPageId: null,
+                theme: 'light'
+            };
+
+            let tempSubjectIcon = '📚';
+            let confirmCallback = null;
+            let hasUnsavedChanges = false;
+
+            const views = {
+                dashboard: document.getElementById('view-dashboard'),
+                pages: document.getElementById('view-pages'),
+                editor: document.getElementById('view-editor')
+            };
+
+            const editorCanvas = document.getElementById('editor-canvas');
+            const editorTitle = document.getElementById('editor-title');
+            const saveIndicator = document.getElementById('save-indicator');
+
+            function init() {
+                loadData();
+                applyTheme();
+                renderHeader();
+                renderDashboard();
+                initEmojiGrid();
+                setupEventListeners();
+                
+                window.addEventListener('hashchange', handleRouting);
+                handleRouting();
+            }
+
+            function saveData() {
+                localStorage.setItem('classwork_studio_data', JSON.stringify(state));
+            }
+
+            function loadData() {
+                const data = localStorage.getItem('classwork_studio_data');
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        state = { ...state, ...parsed };
+                        if (!state.user) state.user = { name: '', username: '', avatar: '' };
+                    } catch(e) { console.error("Data corrupt"); }
+                }
+            }
+
+            function toggleTheme() {
+                state.theme = state.theme === 'light' ? 'dark' : 'light';
+                applyTheme();
+                saveData();
+            }
+
+            function applyTheme() {
+                document.documentElement.setAttribute('data-theme', state.theme);
+                const icon = document.getElementById('theme-icon');
+                if(state.theme === 'dark') {
+                    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+                } else {
+                    icon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+                }
+            }
+
+            function renderHeader() {
+                const nameEl = document.getElementById('header-name');
+                const avatarEl = document.getElementById('header-avatar');
+                const initialsEl = document.getElementById('header-initials');
+                
+                if (state.user.name) {
+                    nameEl.textContent = state.user.name;
+                    if (state.user.avatar) {
+                        avatarEl.src = state.user.avatar;
+                        avatarEl.style.display = 'block';
+                        initialsEl.style.display = 'none';
+                    } else {
+                        avatarEl.style.display = 'none';
+                        initialsEl.style.display = 'flex';
+                        initialsEl.textContent = state.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    }
+                } else {
+                    nameEl.textContent = 'Guest';
+                    avatarEl.style.display = 'none';
+                    initialsEl.style.display = 'flex';
+                    initialsEl.textContent = '?';
+                    initialsEl.style.backgroundColor = 'var(--text-secondary)';
+                }
+            }
+
+            function openAccountModal() {
+                document.getElementById('account-name').value = state.user.name || '';
+                document.getElementById('account-username').value = state.user.username || '';
+                
+                const preview = document.getElementById('modal-avatar-preview');
+                const placeholder = document.getElementById('modal-avatar-placeholder');
+                
+                if (state.user.avatar) {
+                    preview.src = state.user.avatar;
+                    preview.style.display = 'block';
+                    placeholder.style.display = 'none';
+                } else {
+                    preview.style.display = 'none';
+                    placeholder.style.display = 'flex';
+                    placeholder.textContent = state.user.name ? state.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+                }
+                
+                openModal('account');
+            }
+
+            function handleAvatarUpload(input) {
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.getElementById('modal-avatar-preview');
+                        const placeholder = document.getElementById('modal-avatar-placeholder');
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                        placeholder.style.display = 'none';
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            function saveAccount() {
+                const name = document.getElementById('account-name').value.trim();
+                const username = document.getElementById('account-username').value.trim();
+                const avatarSrc = document.getElementById('modal-avatar-preview').src;
+                
+                if (!name) {
+                    showToast('Please enter a display name', true);
+                    return;
+                }
+                
+                state.user.name = name;
+                state.user.username = username;
+                state.user.avatar = document.getElementById('modal-avatar-preview').style.display === 'none' ? '' : avatarSrc;
+                
+                saveData();
+                renderHeader();
+                closeModal('account');
+                showToast('Account updated successfully');
+            }
+
+            function initEmojiGrid() {
+                const emojis = ['📚', '📐', '🧬', '🔬', '🧮', '📜', '🗺️', '💻', '🎨', '🎵', '⚽', '🏛️', '🧠', '✏️', '📊', '⚛️', '🌱', '🚀', '🌍', '💡', '🎯', '📖', '🔢', '🧪'];
+                const grid = document.getElementById('emoji-grid');
+                grid.innerHTML = '';
+                
+                emojis.forEach(emoji => {
+                    const btn = document.createElement('button');
+                    btn.className = 'emoji-btn';
+                    btn.textContent = emoji;
+                    btn.onclick = () => selectEmoji(emoji);
+                    grid.appendChild(btn);
+                });
+            }
+
+            function selectEmoji(emoji) {
+                tempSubjectIcon = emoji;
+                document.getElementById('selected-emoji').textContent = emoji;
+            }
+
+            function openSubjectModal(editId = null) {
+                tempSubjectIcon = '📚';
+                document.getElementById('selected-emoji').textContent = '📚';
+                document.getElementById('subject-name').value = '';
+                document.getElementById('subject-modal-title').textContent = 'New Subject';
+                
+                if (editId) {
+                    const sub = state.subjects.find(s => s.id === editId);
+                    if (sub) {
+                        tempSubjectIcon = sub.icon || '📚';
+                        document.getElementById('selected-emoji').textContent = tempSubjectIcon;
+                        document.getElementById('subject-name').value = sub.name;
+                        document.getElementById('subject-modal-title').textContent = 'Edit Subject';
+                        document.getElementById('modal-subject').dataset.editId = editId;
+                    }
+                } else {
+                    delete document.getElementById('modal-subject').dataset.editId;
+                }
+                
+                openModal('subject');
+            }
+
+            function saveSubject() {
+                const name = document.getElementById('subject-name').value.trim();
+                if (!name) {
+                    showToast('Please enter a subject name', true);
+                    return;
+                }
+                
+                const editId = document.getElementById('modal-subject').dataset.editId;
+                
+                if (editId) {
+                    const sub = state.subjects.find(s => s.id === editId);
+                    if (sub) {
+                        sub.name = name;
+                        sub.icon = tempSubjectIcon;
+                    }
+                } else {
+                    const newSub = {
+                        id: 'sub_' + Date.now(),
+                        name: name,
+                        icon: tempSubjectIcon,
+                        pages: []
+                    };
+                    state.subjects.push(newSub);
+                }
+                
+                saveData();
+                renderDashboard();
+                closeModal('subject');
+                showToast(editId ? 'Subject updated' : 'Subject created');
+            }
+
+            function deleteSubject(id) {
+                confirmAction(
+                    'Delete Subject?',
+                    'This will permanently delete the subject and all its pages. This action cannot be undone.',
+                    () => {
+                        state.subjects = state.subjects.filter(s => s.id !== id);
+                        saveData();
+                        renderDashboard();
+                        showToast('Subject deleted');
+                    }
+                );
+            }
+
+            function renderDashboard() {
+                const addBtn = views.dashboard.querySelector('.add-card');
+                views.dashboard.innerHTML = '';
+                views.dashboard.appendChild(addBtn);
+
+                state.subjects.forEach(sub => {
+                    const card = document.createElement('div');
+                    card.className = 'subject-card';
+                    card.innerHTML = `
+                        <button class="btn-delete-sub" onclick="event.stopPropagation(); app.deleteSubject('${sub.id}')" title="Delete Subject">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                        <div class="subject-icon">${sub.icon || '📚'}</div>
+                        <div class="subject-title">${escapeHtml(sub.name)}</div>
+                        <div class="subject-meta">${sub.pages.length} Pages</div>
+                    `;
+                    card.onclick = function() { openSubject(sub.id); };
+                    views.dashboard.insertBefore(card, addBtn);
+                });
+            }
+
+            function openSubject(id) {
+                const subject = state.subjects.find(s => s.id === id);
+                if (!subject) return goHome();
+
+                state.currentSubjectId = id;
+                document.getElementById('pages-subject-title').textContent = subject.name;
+                
+                const pageListContainer = document.getElementById('page-list-container');
+                pageListContainer.innerHTML = '';
+                const sortedPages = [...subject.pages].sort((a,b) => b.date - a.date);
+                
+                if (sortedPages.length === 0) {
+                    pageListContainer.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:60px; font-size: 1.1rem;">No pages yet. Create your first note!</div>';
+                } else {
+                    sortedPages.forEach(page => {
+                        const dateStr = new Date(page.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                        const item = document.createElement('div');
+                        item.className = 'page-item';
+                        item.innerHTML = `
+                            <div class="page-info">
+                                <h3>${escapeHtml(page.title || 'Untitled Page')}</h3>
+                                <span>Last edited: ${dateStr}</span>
+                            </div>
+                            <button class="btn-icon" onclick="event.stopPropagation(); app.deletePage('${page.id}')" style="color:var(--danger)">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        `;
+                        item.onclick = function() { openEditor(id, page.id); };
+                        pageListContainer.appendChild(item);
+                    });
+                }
+
+                switchView('pages');
+                window.location.hash = id;
+            }
+
+            function createNewPage() {
+                const sub = state.subjects.find(s => s.id === state.currentSubjectId);
+                if (!sub) return;
+
+                const newPage = {
+                    id: 'page_' + Date.now(),
+                    title: '',
+                    content: '<p><br></p>',
+                    date: Date.now()
+                };
+                sub.pages.push(newPage);
+                saveData();
+                openEditor(state.currentSubjectId, newPage.id);
+            }
+
+            function deletePage(pageId) {
+                confirmAction(
+                    'Delete Page?',
+                    'Are you sure you want to delete this page? This action cannot be undone.',
+                    () => {
+                        const sub = state.subjects.find(s => s.id === state.currentSubjectId);
+                        if(sub) {
+                            sub.pages = sub.pages.filter(p => p.id !== pageId);
+                            saveData();
+                            openSubject(state.currentSubjectId);
+                            showToast('Page deleted');
+                        }
+                    }
+                );
+            }
+
+            // --- FULLSCREEN EDITOR ---
+            function openEditor(subId, pageId) {
+                const sub = state.subjects.find(s => s.id === subId);
+                const page = sub.pages.find(p => p.id === pageId);
+                
+                if (!sub || !page) return goHome();
+
+                state.currentSubjectId = subId;
+                state.currentPageId = pageId;
+                hasUnsavedChanges = false;
+
+                editorTitle.value = page.title;
+                editorCanvas.innerHTML = page.content;
+                updateSaveIndicator();
+
+                // Show fullscreen editor
+                views.editor.style.display = 'flex';
+                
+                // Hide main header for fullscreen experience
+                document.getElementById('main-header').style.display = 'none';
+                
+                // Focus editor
+                setTimeout(() => editorCanvas.focus(), 100);
+                
+                window.location.hash = `${subId}/${pageId}`;
+            }
+
+            function closeEditor() {
+                if (hasUnsavedChanges) {
+                    confirmAction(
+                        'Unsaved Changes',
+                        'You have unsaved changes. Save before leaving?',
+                        () => {
+                            saveCurrentPage();
+                            exitEditor();
+                        }
+                    );
+                    // Modify to add discard option
+                    const footer = document.querySelector('#modal-confirm .modal-footer');
+                    if (!footer.querySelector('.discard-btn')) {
+                        const discardBtn = document.createElement('button');
+                        discardBtn.className = 'btn discard-btn';
+                        discardBtn.textContent = 'Discard';
+                        discardBtn.onclick = () => {
+                            closeModal('confirm');
+                            exitEditor();
+                        };
+                        footer.insertBefore(discardBtn, footer.firstChild);
+                    }
+                } else {
+                    exitEditor();
+                }
+            }
+
+            function exitEditor() {
+                views.editor.style.display = 'none';
+                document.getElementById('main-header').style.display = 'flex';
+                
+                // Return to pages view
+                if (state.currentSubjectId) {
+                    openSubject(state.currentSubjectId);
+                } else {
+                    goHome();
+                }
+            }
+
+            function saveCurrentPage() {
+                const sub = state.subjects.find(s => s.id === state.currentSubjectId);
+                const page = sub.pages.find(p => p.id === state.currentPageId);
+                
+                if(page) {
+                    page.title = editorTitle.value;
+                    page.content = editorCanvas.innerHTML;
+                    page.date = Date.now();
+                    saveData();
+                    
+                    hasUnsavedChanges = false;
+                    updateSaveIndicator();
+                    showToast('Saved successfully');
+                }
+            }
+
+            function updateSaveIndicator() {
+                saveIndicator.textContent = hasUnsavedChanges ? 'Unsaved' : 'Saved';
+                saveIndicator.style.color = hasUnsavedChanges ? 'var(--danger)' : 'var(--success)';
+            }
+
+            function format(command, value = null) {
+                document.execCommand(command, false, value);
+                editorCanvas.focus();
+                markUnsaved();
+            }
+
+            function markUnsaved() {
+                if (!hasUnsavedChanges) {
+                    hasUnsavedChanges = true;
+                    updateSaveIndicator();
+                }
+            }
+
+            // --- Data Transfer ---
+            function openDataModal() {
+                const dataStr = JSON.stringify(state, null, 2);
+                document.getElementById('json-field').value = dataStr;
+                openModal('data');
+            }
+
+            function copyJson() {
+                const field = document.getElementById('json-field');
+                field.select();
+                document.execCommand('copy');
+                showToast('JSON copied to clipboard');
+            }
+
+            function importJson() {
+                try {
+                    const data = JSON.parse(document.getElementById('json-field').value);
+                    if (typeof data === 'object' && data !== null) {
+                        confirmAction(
+                            'Import Data?',
+                            'This will completely replace your current data including your profile, subjects, and pages. Continue?',
+                            () => {
+                                state = data;
+                                if (!state.user) state.user = { name: '', username: '', avatar: '' };
+                                if (!state.subjects) state.subjects = [];
+                                
+                                saveData();
+                                renderHeader();
+                                renderDashboard();
+                                closeModal('data');
+                                goHome();
+                                showToast('Data imported successfully');
+                            }
+                        );
+                    } else {
+                        throw new Error('Invalid format');
+                    }
+                } catch (e) {
+                    showToast('Invalid JSON data', true);
+                }
+            }
+
+            // --- Modal System ---
+            function openModal(type) {
+                const modal = document.getElementById(`modal-${type}`);
+                modal.classList.add('active');
+            }
+
+            function closeModal(type) {
+                const modal = document.getElementById(`modal-${type}`);
+                modal.classList.remove('active');
+            }
+
+            function confirmAction(title, message, callback) {
+                confirmCallback = callback;
+                document.getElementById('confirm-title').textContent = title;
+                document.getElementById('confirm-message').textContent = message;
+                openModal('confirm');
+            }
+
+            function executeConfirm() {
+                if (confirmCallback) {
+                    confirmCallback();
+                    confirmCallback = null;
+                }
+                closeModal('confirm');
+            }
+
+            // --- Utilities ---
+            function switchView(viewName) {
+                Object.values(views).forEach(el => {
+                    if (el.id !== 'view-editor') {
+                        el.style.display = 'none';
+                    }
+                });
+                
+                if (viewName !== 'editor') {
+                    views[viewName].style.display = viewName === 'dashboard' ? 'grid' : 'flex';
+                }
+                
+                window.scrollTo(0,0);
+            }
+
+            function handleRouting() {
+                const hash = window.location.hash.replace('#', '');
+                if (!hash) {
+                    goHome();
+                    return;
+                }
+                
+                const parts = hash.split('/');
+                const subId = parts[0];
+                const pageId = parts[1];
+
+                if (subId && pageId) {
+                    openEditor(subId, pageId);
+                } else if (subId) {
+                    openSubject(subId);
+                } else {
+                    goHome();
+                }
+            }
+
+            function goHome() {
+                state.currentSubjectId = null;
+                state.currentPageId = null;
+                window.location.hash = '';
+                renderDashboard();
+                switchView('dashboard');
+            }
+
+            function showToast(message, isError = false) {
+                const toast = document.getElementById('toast');
+                const msgEl = document.getElementById('toast-message');
+                
+                msgEl.textContent = message;
+                toast.classList.toggle('error', isError);
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            function setupEventListeners() {
+                // Context Menu
+                editorCanvas.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const selection = window.getSelection().toString();
+                    if (selection.length > 0) {
+                        const menu = document.getElementById('context-menu');
+                        menu.style.left = Math.min(e.pageX, window.innerWidth - 200) + 'px';
+                        menu.style.top = Math.min(e.pageY, window.innerHeight - 200) + 'px';
+                        menu.style.display = 'block';
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!document.getElementById('context-menu').contains(e.target)) {
+                        document.getElementById('context-menu').style.display = 'none';
+                    }
+                });
+
+                // Keyboard Shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        if (state.currentPageId) saveCurrentPage();
+                    }
+                });
+
+                // Track changes
+                editorCanvas.addEventListener('input', markUnsaved);
+                editorTitle.addEventListener('input', markUnsaved);
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            // --- Public API ---
+            return {
+                init,
+                toggleTheme,
+                openAccountModal,
+                handleAvatarUpload,
+                saveAccount,
+                openSubjectModal,
+                saveSubject,
+                deleteSubject,
+                openSubject,
+                createNewPage,
+                deletePage,
+                openEditor,
+                closeEditor,
+                saveCurrentPage,
+                format,
+                openDataModal,
+                closeModal,
+                copyJson,
+                importJson,
+                confirmAction,
+                executeConfirm,
+                goHome,
+                showToast,
+                hideContextMenu: () => document.getElementById('context-menu').style.display = 'none'
+            };
+        })();
+
+        document.addEventListener('DOMContentLoaded', app.init);
+    </script>
+</body>
+</html>
